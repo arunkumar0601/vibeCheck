@@ -1,0 +1,159 @@
+<!-- personDetail.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Person Detail</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #e9ecef; /* Light gray background */
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background-color: #fff; /* White background for the container */
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .star-rating {
+            font-size: 2rem;
+            color: gold;
+            cursor: pointer; /* Change cursor to pointer for star rating */
+        }
+        .day-rating {
+            margin: 20px 0;
+        }
+        .day-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .day-container {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f8f9fa; /* Light background for day containers */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .tekvocation-logo {
+            width: 150px; /* Adjust logo size */
+            margin: 20px 0; /* Add margin for spacing */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <img src="https://example.com/tekvocation-logo.png" alt="Tekvocation Logo" class="tekvocation-logo"> <!-- Replace with actual logo URL -->
+        <h1 id="personName"></h1>
+        <img id="personImage" src="" alt="Person Image" class="img-fluid rounded-circle" style="max-width: 200px;">
+        
+        <div class="mt-4">
+            <h3>Rate this person:</h3>
+            <div class="star-rating" id="starRating">
+                <span class="star" data-value="1">★</span>
+                <span class="star" data-value="2">★</span>
+                <span class="star" data-value="3">★</span>
+                <span class="star" data-value="4">★</span>
+                <span class="star" data-value="5">★</span>
+            </div>
+            <button id="submitRating" class="btn btn-primary mt-3">Submit Rating</button>
+        </div>
+
+        <h3 class="mt-5">Daily Ratings:</h3>
+        <div id="dailyRatings">
+            <!-- Daily ratings will be populated here -->
+        </div>
+
+        <div class="mt-5">
+            <h3>Average Ratings:</h3>
+            <div id="averageRatings">
+                <!-- Average ratings will be populated here -->
+            </div>
+            <button id="calculateAverage" class="btn btn-secondary mt-3">Calculate Overall Average</button>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const personName = urlParams.get('name');
+        const personImage = urlParams.get('image');
+
+        document.getElementById('personName').innerText = personName;
+        document.getElementById('personImage').src = personImage;
+
+        const stars = document.querySelectorAll('.star');
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                const rating = star.getAttribute('data-value');
+                stars.forEach(s => s.classList.remove('selected'));
+                for (let i = 0; i < rating; i++) {
+                    stars[i].classList.add('selected');
+                }
+            });
+        });
+
+        document.getElementById('submitRating').addEventListener('click', () => {
+            const selectedRating = [...stars].find(s => s.classList.contains('selected'));
+            if (selectedRating) {
+                const ratingValue = selectedRating.getAttribute('data-value');
+                alert(`You rated ${personName} with ${ratingValue} stars!`);
+                addDailyRating(ratingValue);
+            } else {
+                alert('Please select a rating before submitting.');
+            }
+        });
+
+        function addDailyRating(rating) {
+            const dailyRatingsContainer = document.getElementById('dailyRatings');
+            const averageRatingsContainer = document.getElementById('averageRatings');
+            const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const dailyRatings = {};
+
+            // Clear previous ratings
+            dailyRatingsContainer.innerHTML = '';
+            averageRatingsContainer.innerHTML = '';
+
+            daysOfWeek.forEach(day => {
+                dailyRatings[day] = []; // Initialize array for each day
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day-container day-rating';
+                dayDiv.innerHTML = `
+                    <div class="day-title">${day}</div>
+                    <div class="star-rating" data-day="${day}">
+                        ${Array.from({ length: 5 }, (_, i) => `<span class="star" data-value="${i + 1}">★</span>`).join('')}
+                    </div>
+                    <div class="average-rating" id="average-${day}">Average: N/A</div>
+                `;
+                dailyRatingsContainer.appendChild(dayDiv);
+
+                // Add click event for daily star ratings
+                const dailyStars = dayDiv.querySelectorAll('.star');
+                dailyStars.forEach(star => {
+                    star.addEventListener('click', () => {
+                        const dailyRating = star.getAttribute('data-value');
+                        dailyStars.forEach(s => s.classList.remove('selected'));
+                        for (let i = 0; i < dailyRating; i++) {
+                            dailyStars[i].classList.add('selected');
+                        }
+                        dailyRatings[day] = dailyRating; // Store the rating for the day
+                        updateAverageRating(day, dailyRatings[day]);
+                    });
+                });
+            });
+        }
+
+        function updateAverageRating(day, rating) {
+            const averageElement = document.getElementById(`average-${day}`);
+            averageElement.innerText = `Average: ${rating}`;
+        }
+
+        document.getElementById('calculateAverage').addEventListener('click', () => {
+            const totalRatings = Object.values(dailyRatings).reduce((acc, rating) => acc + (parseInt(rating) || 0), 0);
+            const numberOfDays = Object.keys(dailyRatings).length;
+            const overallAverage = (totalRatings / numberOfDays).toFixed(2);
+            alert(`Overall Average Rating for the Week: ${overallAverage}`);
+        });
+    </script>
+</body>
+</html>
